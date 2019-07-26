@@ -70,8 +70,7 @@ cdef int kcp_output_callback(const char *buf, int len, ikcpcb *kcp, void *arg):
     cdef UsrInfo *c = <UsrInfo *>arg;
     uid = <object>c.handle
     kcp_peer = g_KcpPeers[uid]
-
-    kcp_peer.callback(buf[:len])
+    kcp_peer.udp_output(buf[:len])
     return 0
 
 cdef void del_kcp(PyObject *obj):
@@ -87,7 +86,7 @@ cdef void del_kcp(PyObject *obj):
         ckcp.user = NULL
     ikcp_release(ckcp)
 
-def lkcp_create(kcp_peer, conv, uid):
+def lkcp_create(conv, uid, kcp_peer):
     global g_KcpPeers
     g_KcpPeers[uid] = kcp_peer
     cdef UsrInfo *c = <UsrInfo *>PyMem_Malloc(sizeof(UsrInfo))

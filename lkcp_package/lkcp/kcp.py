@@ -4,13 +4,13 @@ from lkcp import core
 
 __all__ = ["KcpObj"]
 class KcpObj:
-    def __init__(self, kcp_sess, conv, id):
+    def __init__(self, conv, id, kcp_peer):
         """
         :param conv: conv为一个表示会话编号的整数，和tcp的 conv一样，通信双方需保证 conv相同，相互的数据包才能够被认可
         :param id: user表示用户的id
         :param callback: KCP的下层协议输出函数，KCP需要发送数据时会调用它，需要传入id和要发送的数据buffer两个参数
         """
-        self.cobj = core.lkcp_create(kcp_sess, conv, id)
+        self.cobj = core.lkcp_create(conv, id, kcp_peer)
 
     def recv(self, len=4*1024*1024):
         return core.lkcp_recv(self.cobj, len)
