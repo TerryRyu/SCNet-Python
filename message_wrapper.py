@@ -24,8 +24,6 @@ class MessageWrapper:
             raise TypeError('You must register packet type [{}]'.
                                                 format(packet_type))
 
-
-
         self.message_type_num = packet_info[0]
         self.packet_type_num = packet_info[1]
 
@@ -37,48 +35,21 @@ class MessageWrapper:
         if self.message_type_num == MessageType.RAWBYTE:
             if packet_type is str:
 
-                # message에 따로 NULL값을 추가해야하나?
                 self.byte_message = message.encode('UTF-8')
                 self.byte_size = len(message)
-
-                # str일 경우 length로 해야하나? getsizeof로 해야하나?
-                # C++이랑 bytesize가 다를 수 있기 때문에..
-                #   => 파이썬에서는 send할 때 byte data만 보내는것 확인했음
-                #   => so, byte_size를 len으로 처리하면 될 듯
-                #   => 이때 message에 NULL을 넣어야 하는지?
-
-                # self.byte_size = get_size(self.byte_message)
 
         elif self.message_type_num == MessageType.PROTOBUF:
             self.byte_message = message.SerializeToString()
             self.byte_size = message.ByteSize()
 
-            # need message serialize to string(byte) ?
-            # self.byte_message = message
-
         else:
             pass
 
+    def __repr__(self):
+        repr_str = ''
+        repr_str += f'message: {self.message}'
+        repr_str += f'bytesize: {self.bytesize}'
+        repr_str += f'message_type_num: {self.message_type_num}'
+        repr_str += f'packet_type_num: {self.packet_type_num}'
 
-    def encode_to_bytes(self):
-
-        coded_output = b''
-
-        coded_output += MAGIC_PACKET
-        coded_output += varint.encode(self.byte_size)
-        coded_output += varint.encode(self.packet_type_num)
-        coded_output += varint.encode(self.message_type_num)
-        coded_output += varint.encode(0)
-        coded_output += varint.encode(0)
-
-        coded_output += self.byte_message
-
-        return coded_output
-
-
-    def print_attrs(self):
-        print('message:', self.message)
-        print('bytesize', self.byte_size)
-        print('message_type_num:', self.message_type_num)
-        print('packet_type_num:', self.packet_type_num)
-        
+        return repr_str
