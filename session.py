@@ -48,8 +48,8 @@ class RendezvousSession(BaseSession):
 
         coded_output += message_wrapper.byte_message
 
-        with self.kcp_peer.mutex:
-            self.kcp_peer.kcp.send(coded_output)
+        with self.public_kcp_peer.mutex:
+            self.public_kcp_peer.kcp.send(coded_output)
 
         return True
 
