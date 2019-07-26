@@ -63,34 +63,33 @@ cdef struct UsrInfo:
     int handle
 
 RECV_BUFFER_LEN = 4 * 1024 * 1024
-g_KcpSesses = {}
+g_KcpPeers = {}
 
 cdef int kcp_output_callback(const char *buf, int len, ikcpcb *kcp, void *arg):
-    global g_KcpSesses
+    global g_KcpPeers
     cdef UsrInfo *c = <UsrInfo *>arg;
     uid = <object>c.handle
-    kcp_sess = g_KcpSesses[uid]
+    kcp_peer = g_KcpPeers[uid]
 
-    # cb(uid, buf[:len])
-    kcp_sess.callback(buf[:len])
+    kcp_peer.callback(buf[:len])
     return 0
 
 cdef void del_kcp(PyObject *obj):
     cdef ikcpcb* ckcp = <ikcpcb*>get_pointer(<object>obj, NULL)
     cdef UsrInfo *c = NULL
     if ckcp.user != NULL:
-        global g_KcpSesses
+        global g_KcpPeers
         c = <UsrInfo *>ckcp.user
         uid = <object>c.handle
-        del g_KcpSesses[uid]
+        del g_KcpPeers[uid]
         PyMem_Free(c)
         c = NULL
         ckcp.user = NULL
     ikcp_release(ckcp)
 
-def lkcp_create(kcp_sess, conv, uid):
-    global g_KcpSesses
-    g_KcpSesses[uid] = kcp_sess
+def lkcp_create(kcp_peer, conv, uid):
+    global g_KcpPeers
+    g_KcpPeers[uid] = kcp_peer
     cdef UsrInfo *c = <UsrInfo *>PyMem_Malloc(sizeof(UsrInfo))
     c.handle = <int>uid
     cdef ikcpcb* ckcp = ikcp_create(conv, c)
