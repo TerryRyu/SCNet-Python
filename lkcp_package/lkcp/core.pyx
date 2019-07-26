@@ -60,7 +60,7 @@ cdef extern from "compat.h":
     void* get_pointer(object, const char*)
 
 cdef struct UsrInfo:
-    int handle
+    long handle
 
 RECV_BUFFER_LEN = 4 * 1024 * 1024
 g_KcpPeers = {}
@@ -90,7 +90,7 @@ def lkcp_create(conv, uid, kcp_peer):
     global g_KcpPeers
     g_KcpPeers[uid] = kcp_peer
     cdef UsrInfo *c = <UsrInfo *>PyMem_Malloc(sizeof(UsrInfo))
-    c.handle = <int>uid
+    c.handle = <long>uid
     cdef ikcpcb* ckcp = ikcp_create(conv, c)
     ckcp.output = kcp_output_callback
     return make_capsule(ckcp, NULL, del_kcp)
