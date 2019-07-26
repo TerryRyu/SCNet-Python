@@ -1,3 +1,4 @@
+import socket
 import threading
 import time
 
@@ -20,7 +21,7 @@ class BaseSession:
 
 class RendezvousSession(BaseSession):
     
-    def __init__(sock, connection_id):
+    def __init__(self, sock, connection_id):
         self.sock = sock
         self.connection_id = connection_id
         self.crypto_type = 0
@@ -30,10 +31,8 @@ class RendezvousSession(BaseSession):
     def is_connected():
         return True
 
-    def set_public_kcp_peer(kcp_conv, ip, port, udp_output):
-        self.public_kcp_peer = KcpPeer(kcp_conv, 
-                                       self.sock, ip, port, 
-                                       udp_output)
+    def set_public_kcp_peer(self, kcp_conv, ip, port):
+        self.public_kcp_peer = KcpPeer(kcp_conv, self.sock, ip, port)
 
     def send(message_wrapper):
 
@@ -49,30 +48,43 @@ class RendezvousSession(BaseSession):
         coded_output += message_wrapper.byte_message
 
         with self.public_kcp_peer.mutex:
-            self.public_kcp_peer.kcp.send(coded_output)
+            ret = self.public_kcp_peer.kcp.send(coded_output)
 
-        return True
+        return ret
+
+    def recv_header():
+        pass
+
+    def recv_body():
+        pass
 
 class KcpPeer:
-    def __init__(self, kcp_conv, sock, ip, port, udp_output):
+    def __init__(self, kcp_conv, sock, ip, port):
 
-        self.kcp = KcpObj(self, kcp_conv, id(self))
+        self.kcp = KcpObj(kcp_conv, id(self), self)
         self.kcp.nodelay(1, 10, 2, 1)
         self.kcp.wndsize(128, 128)
         self.kcp.setmtu(1400)
 
         self.next = 0
         self.sock = sock
+
+        # client쪽? server쪽?
         self.peer = (ip, port)
 
         self.mutex = threading.Lock()
 
         self.last_ping = None
 
-        self.callback = udp_output
+    def udp_output(data):
+        return self.sock.sendto(data, self.peer)
 
 
 if __name__ == '__main__':
-    # kcp = KcpPeer(123, 1,2,3, udp_output)
-    # time.sleep(3)
-    # print(1)
+    
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.setblocking(False)
+
+    sess = RendezvousSession(sock, 1)
+    sess.set_public_kcp_peer(0x11223344, '127.0.0.1', 9191)
