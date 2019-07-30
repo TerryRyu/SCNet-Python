@@ -58,10 +58,9 @@
 import socket
 import time
 from lkcp import KcpObj
+from utils import uint322netbytes, netbytes2uint32
 
 g_ScriptStartTime = time.time()
-
-from utils import uint322netbytes, netbytes2uint32
 
 def getms():
     return int((time.time()-g_ScriptStartTime)*1000)
