@@ -31,8 +31,8 @@ class RendezvousSession(BaseSession):
     def is_connected():
         return True
 
-    def set_public_kcp_peer(self, kcp_conv, ip, port):
-        self.public_kcp_peer = KcpPeer(kcp_conv, self.sock, ip, port)
+    def set_public_kcp_peer(self, ip, port):
+        self.public_kcp_peer = KcpPeer(self.sock, ip, port)
 
     def send(message_wrapper):
 
@@ -59,9 +59,9 @@ class RendezvousSession(BaseSession):
         pass
 
 class KcpPeer:
-    def __init__(self, kcp_conv, sock, ip, port):
+    def __init__(self, sock, ip, port):
 
-        self.kcp = KcpObj(kcp_conv, id(self), self)
+        self.kcp = KcpObj(0x11223344, id(self), self)
         self.kcp.nodelay(1, 10, 2, 1)
         self.kcp.wndsize(128, 128)
         self.kcp.setmtu(1400)
@@ -69,15 +69,14 @@ class KcpPeer:
         self.next = 0
         self.sock = sock
 
-        # client쪽? server쪽?
-        self.peer = (ip, port)
+        self.server_peer = ip, port
 
         self.mutex = threading.Lock()
 
         self.last_ping = None
 
-    def udp_output(data):
-        return self.sock.sendto(data, self.peer)
+    def udp_output(self, data):
+        return self.sock.sendto(data, self.server_peer)
 
 
 if __name__ == '__main__':
@@ -88,3 +87,4 @@ if __name__ == '__main__':
 
     sess = RendezvousSession(sock, 1)
     sess.set_public_kcp_peer(0x11223344, '127.0.0.1', 9191)
+
