@@ -1,9 +1,19 @@
-import time
+import logging
 import random
+import time
+
 
 g_ScriptStartTime = time.time()
-
 g_RndSeed = int(time.time())
+
+log = logging.getLogger(__name__)
+
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+
+log.addHandler(handler)
+log.setLevel(logging.DEBUG)
+
 
 def msleep(ms):
     time.sleep(ms * 0.001)
@@ -33,3 +43,7 @@ def uint322netbytes(i):
 def netbytes2uint32(s):
     # return s[0]<<24 | s[1]<<16 | s[2]<<8 | s[3]
     return int.from_bytes(s, byteorder="big", signed=False)
+
+def make_enum(type_name='Enum', start=0, *sequential, **named):
+    enums = dict(zip(sequential, range(start, start+len(sequential))), **named)
+    return type(type_name, (), enums)
