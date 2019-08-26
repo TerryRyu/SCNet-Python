@@ -46,9 +46,12 @@ class MessageWrapper:
         self.byted_message = byted_message
 
     def get_protobuf_packet_type(self, message_class):
+        for key, value in self.registered_types.items():
+            # is/== ?
+            if value[0] is message_class:
+                return key[1]
 
-
-        return 0
+        return
 
     def get_coded_output(self):
         coded_output = b''
