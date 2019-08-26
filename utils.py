@@ -1,3 +1,4 @@
+import threading
 import logging
 import random
 import time
@@ -47,3 +48,17 @@ def netbytes2uint32(s):
 def make_enum(type_name='Enum', start=0, *sequential, **named):
     enums = dict(zip(sequential, range(start, start+len(sequential))), **named)
     return type(type_name, (), enums)
+
+def get_current_time_sec():
+    return time.time()
+
+class StoppableThread(threading.Thread):
+    def __init__(self):
+        super().__init__()
+        self._stop_event = threading.Event()
+
+    def interrupt(self):
+        self._stop_event.set()
+
+    def is_interrupted(self):
+        return self._stop_event.is_set()
