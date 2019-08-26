@@ -6,50 +6,70 @@ from message_header import MessageType, MAGIC_PACKET
 
 
 class MessageWrapper:
-    def __init__(self, message, registered_types):
-
-        self.byte_message = None
-        self.byte_size = None
-        self.packet_type_num = None
-        self.message_type_num = None
+    def __init__(self, registered_types, 
+                       message, message_type, byte_size=None, packet_type=None,
+                       crypto_type=0, connection_id=0):
         
-        self.wrap_message(message, registered_types)
+        self.registered_types = registered_types
 
-    def wrap_message(self, message, registered_types):
+        if message_type == MessageType.RAWBYTE:
+            if packet_type is None:
+                raise Error('packet type must be defined')
 
-        packet_type = type(message)
+            if isinstance(message, str):
+                byted_message = message.encode('UTF-8')
+            elif isinstance(message, bytes):
+                byted_message = message
+            elif message is None:
+                byted_message = b''
+            else:
+                raise Error('Unknown RAWBYTE type')
 
-        packet_info = registered_types[packet_type]
-        if packet_info is None:
-            raise TypeError('You must register packet type [{}]'.
-                                                format(packet_type))
+            if byte_size is None:
+                byte_size = len(byted_message)
 
-        self.message_type_num = packet_info[0]
-        self.packet_type_num = packet_info[1]
+        elif message_type == MessageType.PROTOBUF:
+            if packet_type is None:
+                packet_type = self.get_protobuf_packet_type(message.__class__)
 
-        """
-        Specification byte size of message per all packet types
-        """
-        self.byte_size = None
-
-        if self.message_type_num == MessageType.RAWBYTE:
-            if packet_type is str:
-
-                self.byte_message = message.encode('UTF-8')
-                self.byte_size = len(message)
-
-        elif self.message_type_num == MessageType.PROTOBUF:
-            self.byte_message = message.SerializeToString()
-            self.byte_size = message.ByteSize()
+            byted_message = message.SerializeToString()
+            byte_size = message.ByteSize()
 
         else:
-            pass
+            raise Error('Unknown message type')
+
+        self.byte_size = byte_size
+        self.packet_type = packet_type
+        self.message_type = message_type
+        self.crypto_type = crypto_type
+        self.connection_id = connection_id
+        self.byted_message = byted_message
+
+    def get_protobuf_packet_type(self, message_class):
+
+
+        return 0
+
+    def get_coded_output(self):
+        coded_output = b''
+        coded_output += MAGIC_PACKET
+        coded_output += varint.encode(self.byte_size)
+        coded_output += varint.encode(self.packet_type)
+        coded_output += varint.encode(self.message_type)
+        coded_output += varint.encode(self.crypto_type)
+        coded_output += varint.encode(self.connection_id)
+        coded_output += byted_message
+
+        return coded_output
 
     def __repr__(self):
+
         repr_str = ''
-        repr_str += f'message: {self.message}'
-        repr_str += f'bytesize: {self.bytesize}'
-        repr_str += f'message_type_num: {self.message_type_num}'
-        repr_str += f'packet_type_num: {self.packet_type_num}'
+        repr_str += f'byte_size: {self.byte_size}'
+        repr_str += f'packet_type: {self.packet_type}'
+        repr_str += f'message_type: {self.message_type}'
+        repr_str += f'crypto_type: {self.crypto_type}'
+        repr_str += f'connection_id: {self.connection_id}'
+        repr_str += f'byted_message: {self.byted_message}'
 
         return repr_str
